@@ -33,6 +33,11 @@ class CallScorePublisher:
             acks="all",
             retries=3,
             max_block_ms=10_000,
+            # Batching: accumulate up to 16 KB or wait 50 ms before sending.
+            # Reduces broker round-trips under high concurrency (perf fix #2).
+            batch_size=16_384,
+            linger_ms=50,
+            compression_type="lz4",
         )
         self._db_url = database_url
 

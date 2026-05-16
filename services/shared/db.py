@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,6 +10,7 @@ from typing import Any, Generator, Sequence
 
 import psycopg2
 import psycopg2.extras
+import psycopg2.pool
 
 
 @dataclass
@@ -21,13 +23,30 @@ class UtteranceRow:
     ended_at: datetime
 
 
+# Module-level connection pool — shared across all UtteranceRepository instances
+# in a process.  min/max sized for Airflow LocalExecutor (1 worker per DAG run).
+_pool: psycopg2.pool.ThreadedConnectionPool | None = None
+
+
+def _get_pool(database_url: str) -> psycopg2.pool.ThreadedConnectionPool:
+    global _pool
+    if _pool is None or _pool.closed:
+        _pool = psycopg2.pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=int(os.getenv("DB_POOL_MAX", "10")),
+            dsn=database_url,
+        )
+    return _pool
+
+
 class UtteranceRepository:
     def __init__(self, database_url: str) -> None:
         self._url = database_url
 
     @contextmanager
     def _conn(self) -> Generator[Any, None, None]:
-        conn = psycopg2.connect(self._url)
+        pool = _get_pool(self._url)
+        conn = pool.getconn()
         try:
             yield conn
             conn.commit()
@@ -35,7 +54,7 @@ class UtteranceRepository:
             conn.rollback()
             raise
         finally:
-            conn.close()
+            pool.putconn(conn)
 
     def insert_utterances(self, call_id: str, utterances: Sequence[UtteranceRow]) -> int:
         if not utterances:

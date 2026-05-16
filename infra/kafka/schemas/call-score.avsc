@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "CallScore",
+  "namespace": "com.eso.score",
+  "doc": "Aggregated 0–100 risk score for a call window, published by the risk-scorer service.",
+  "fields": [
+    { "name": "eventId",      "type": "string" },
+    { "name": "callId",       "type": "string" },
+    { "name": "score",        "type": "int",    "doc": "0–100 composite risk score." },
+    { "name": "phraseScore",  "type": "int",    "doc": "Sub-score from deterministic phrase matching." },
+    { "name": "llmScore",     "type": "int",    "doc": "Sub-score from LLM holistic assessment." },
+    { "name": "riskEventIds", "type": { "type": "array", "items": "string" }, "default": [] },
+    { "name": "promptHash",   "type": "string" },
+    { "name": "responseHash", "type": "string" },
+    { "name": "latencyMs",    "type": "int" },
+    {
+      "name": "scoredAt",
+      "type": { "type": "long", "logicalType": "timestamp-millis" }
+    },
+    { "name": "schemaVersion", "type": "string", "default": "1.0.0" }
+  ]
+}

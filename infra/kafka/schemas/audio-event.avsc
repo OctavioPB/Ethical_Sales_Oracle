@@ -1,0 +1,98 @@
+{
+  "type": "record",
+  "name": "AudioChunkEvent",
+  "namespace": "com.eso.audio",
+  "doc": "A 15-second PCM audio chunk published by the ingestion service.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string",
+      "doc": "UUID v4 identifying this specific chunk event."
+    },
+    {
+      "name": "callId",
+      "type": "string",
+      "doc": "UUID of the parent call session. All chunks from the same call share this ID."
+    },
+    {
+      "name": "region",
+      "type": {
+        "type": "enum",
+        "name": "Region",
+        "symbols": ["EU", "US", "UK", "APAC"]
+      },
+      "doc": "Geographic region of the sales desk."
+    },
+    {
+      "name": "deskId",
+      "type": "string",
+      "doc": "Identifier of the sales desk originating the call (e.g. desk_001)."
+    },
+    {
+      "name": "agentId",
+      "type": "string",
+      "doc": "Anonymised identifier of the sales agent on the call."
+    },
+    {
+      "name": "chunkIndex",
+      "type": "int",
+      "doc": "Zero-based sequence number of this chunk within the call. Used to reconstruct order."
+    },
+    {
+      "name": "chunkDurationMs",
+      "type": "int",
+      "doc": "Actual duration of this chunk in milliseconds (nominally 15000; may be shorter for the last chunk)."
+    },
+    {
+      "name": "sampleRate",
+      "type": "int",
+      "default": 16000,
+      "doc": "Audio sample rate in Hz."
+    },
+    {
+      "name": "channels",
+      "type": "int",
+      "default": 1,
+      "doc": "Number of audio channels. 1 = mono (expected); 2 = stereo (requires channel splitting before STT)."
+    },
+    {
+      "name": "bitDepth",
+      "type": "int",
+      "default": 16,
+      "doc": "PCM bit depth."
+    },
+    {
+      "name": "audioPayload",
+      "type": "bytes",
+      "doc": "Raw PCM audio bytes for this chunk."
+    },
+    {
+      "name": "capturedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Unix epoch milliseconds when the chunk was captured at the source."
+    },
+    {
+      "name": "publishedAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Unix epoch milliseconds when the chunk was published to Kafka by the ingestion service."
+    },
+    {
+      "name": "isLastChunk",
+      "type": "boolean",
+      "default": false,
+      "doc": "True if this is the final chunk of the call — signals downstream that the call has ended."
+    },
+    {
+      "name": "schemaVersion",
+      "type": "string",
+      "default": "1.0.0",
+      "doc": "Semantic version of this Avro schema. Increment on breaking changes."
+    }
+  ]
+}

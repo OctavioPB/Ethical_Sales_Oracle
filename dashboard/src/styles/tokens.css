@@ -1,0 +1,62 @@
+/* ESO Design Tokens — sourced from BRAND.md */
+:root {
+  /* Brand palette */
+  --primary:    #003366;
+  --primary-80: #1A4D80;
+  --primary-60: #336699;
+  --primary-30: #99BBDD;
+  --primary-10: #E0EAF4;
+  --gold:       #C8982A;
+  --gold-light: #E8C46A;
+  --dark:       #1C1C2E;
+  --mid:        #6B7280;
+  --light:      #F4F6F9;
+  --white:      #FFFFFF;
+
+  /* Typography */
+  --fd: 'Fraunces', Georgia, serif;
+  --fb: 'Plus Jakarta Sans', sans-serif;
+
+  /* Risk level semantic colors (mapped from BRAND.md status badge system) */
+  --risk-low-dot:   #27B97C;
+  --risk-low-bg:    #E0F7EF;
+  --risk-low-text:  #0D5C3A;
+
+  --risk-med-dot:   #F07020;
+  --risk-med-bg:    #FEF0E6;
+  --risk-med-text:  #7A3800;
+
+  --risk-high-dot:  #E03448;
+  --risk-high-bg:   #FDEAEA;
+  --risk-high-text: #7A1020;
+
+  --risk-crit-dot:  #E03448;
+  --risk-crit-bg:   #7A1020;
+  --risk-crit-text: #FFFFFF;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--fb);
+  font-size: 15px;
+  line-height: 1.7;
+  background: var(--light);
+  color: var(--dark);
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Focus ring — meets WCAG 2.1 AA */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}

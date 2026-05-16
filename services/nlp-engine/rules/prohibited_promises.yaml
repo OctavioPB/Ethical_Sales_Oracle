@@ -1,0 +1,176 @@
+schema_version: "1.0.0"
+category: PROHIBITED_PROMISE
+sector: banking
+jurisdiction: EU
+enabled: true
+# Reviewed by: Compliance SME (Phase 1 — Banking sector sign-off pending)
+# Regulatory basis: MiFID II Article 24; CNMV Circular 1/2022; FTC Act Section 5
+
+rules:
+
+  # ── Guaranteed return claims ──────────────────────────────────────────────
+  - rule_id: PP-001
+    description: >
+      Agent explicitly claims the product guarantees a positive return.
+      Prohibited under MiFID II Article 24(3) and CNMV Circular 1/2022.
+    severity: CRITICAL
+    enabled: true
+    phrases:
+      - text: "guaranteed return"
+        match_type: exact
+        languages: [en]
+      - text: "guaranteed returns"
+        match_type: exact
+        languages: [en]
+      - text: "guarantee a return"
+        match_type: exact
+        languages: [en]
+      - text: "guarantees a return"
+        match_type: exact
+        languages: [en]
+      - text: "garantía de rentabilidad"
+        match_type: exact
+        languages: [es]
+      - text: "garantizamos una rentabilidad"
+        match_type: exact
+        languages: [es]
+      - text: "rentabilidad garantizada"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "This product offers a guaranteed return of twelve percent per year."
+        - "We guarantee a return on your investment regardless of market conditions."
+        - "The guaranteed returns on this structured product are locked in for five years."
+        - "I can confirm guaranteed returns of eight percent annually."
+        - "Esta cuenta ofrece una garantía de rentabilidad del seis por ciento."
+      negative:
+        - "Past performance does not guarantee future returns."
+        - "There is no guarantee of returns in equity markets."
+        - "Returns are not guaranteed and capital may be at risk."
+
+  # ── Zero / no risk claims ─────────────────────────────────────────────────
+  - rule_id: PP-002
+    description: >
+      Agent claims the product carries no risk of loss.
+      Prohibited for any product where capital is at risk.
+    severity: CRITICAL
+    enabled: true
+    phrases:
+      - text: "zero risk"
+        match_type: exact
+        languages: [en]
+      - text: "no risk"
+        match_type: exact
+        languages: [en]
+      - text: "risk free"
+        match_type: exact
+        languages: [en]
+      - text: "risk-free"
+        match_type: exact
+        languages: [en]
+      - text: "completely safe"
+        match_type: exact
+        languages: [en]
+      - text: "100% safe"
+        match_type: exact
+        languages: [en]
+      - text: "sin riesgo"
+        match_type: exact
+        languages: [es]
+      - text: "libre de riesgo"
+        match_type: exact
+        languages: [es]
+      - text: "completamente seguro"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "This is a zero risk investment, you simply cannot lose money."
+        - "The product is completely risk free for the investor."
+        - "It is 100% safe, your capital is fully protected."
+        - "Esta inversión es sin riesgo para el cliente."
+        - "El producto es completamente seguro y libre de riesgo."
+      negative:
+        - "We aim to minimise risk through diversification."
+        - "The risk-free rate of return is currently two percent."
+        - "Our risk framework ensures appropriate risk management."
+
+  # ── Cannot lose money claims ──────────────────────────────────────────────
+  - rule_id: PP-003
+    description: >
+      Agent explicitly states the customer cannot lose their invested capital.
+      Prohibited under FTC Act Section 5 and MiFID II Article 24.
+    severity: CRITICAL
+    enabled: true
+    phrases:
+      - text: "can't lose money"
+        match_type: exact
+        languages: [en]
+      - text: "cannot lose money"
+        match_type: exact
+        languages: [en]
+      - text: "won't lose money"
+        match_type: exact
+        languages: [en]
+      - text: "will not lose money"
+        match_type: exact
+        languages: [en]
+      - text: "never lost a penny"
+        match_type: exact
+        languages: [en]
+      - text: "no puede perder"
+        match_type: exact
+        languages: [es]
+      - text: "nunca ha perdido"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "With this product you simply can't lose money."
+        - "Our clients cannot lose money on this structured product."
+        - "No investor has ever lost a penny with us in ten years."
+        - "Le garantizamos que no puede perder su capital con esta inversión."
+        - "Nuestra cartera nunca ha perdido dinero en su historia."
+      negative:
+        - "We work hard to ensure you don't lose more than you're comfortable with."
+        - "Capital at risk means you could lose some or all of your investment."
+        - "Past clients have not experienced significant losses in normal markets."
+
+  # ── Capital / principal protection claims ────────────────────────────────
+  - rule_id: PP-004
+    description: >
+      Agent claims full principal protection without a formal capital protection wrapper
+      or guarantee structure approved by compliance.
+    severity: HIGH
+    enabled: true
+    phrases:
+      - text: "principal protected"
+        match_type: exact
+        languages: [en]
+      - text: "capital protected"
+        match_type: exact
+        languages: [en]
+      - text: "capital guarantee"
+        match_type: exact
+        languages: [en]
+      - text: "your money is safe"
+        match_type: exact
+        languages: [en]
+      - text: "capital garantizado"
+        match_type: exact
+        languages: [es]
+      - text: "su dinero está seguro"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "This is a principal protected product so your initial investment is safe."
+        - "The capital protected structure means you will always get your money back."
+        - "I can assure you that your money is safe with this investment."
+        - "Este producto es capital garantizado al cien por cien."
+        - "Su dinero está seguro independientemente de la evolución del mercado."
+      negative:
+        - "Capital at risk — you may not get back the amount you invest."
+        - "We have a formal capital guarantee structure approved by our compliance team."
+        - "The fund aims to preserve capital but there is no guarantee."

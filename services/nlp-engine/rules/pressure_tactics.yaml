@@ -1,0 +1,210 @@
+schema_version: "1.0.0"
+category: PRESSURE_TACTIC
+sector: banking
+jurisdiction: EU
+enabled: true
+# Regulatory basis: FTC Act Section 5 (unfair or deceptive acts); MiFID II Article 24(1)
+# CNMV guidance on coercive selling practices (2023)
+
+rules:
+
+  # ── Artificial urgency — deadline pressure ────────────────────────────────
+  - rule_id: PT-001
+    description: >
+      Agent creates artificial time pressure by claiming the offer expires imminently,
+      forcing a decision before the customer can seek independent advice.
+      Constitutes coercive selling under MiFID II Article 24(1).
+    severity: HIGH
+    enabled: true
+    phrases:
+      - text: "offer closes today"
+        match_type: exact
+        languages: [en]
+      - text: "offer ends today"
+        match_type: exact
+        languages: [en]
+      - text: "today only"
+        match_type: exact
+        languages: [en]
+      - text: "closes this friday"
+        match_type: exact
+        languages: [en]
+      - text: "closes this week"
+        match_type: exact
+        languages: [en]
+      - text: "expires today"
+        match_type: exact
+        languages: [en]
+      - text: "must decide today"
+        match_type: exact
+        languages: [en]
+      - text: "need to decide today"
+        match_type: exact
+        languages: [en]
+      - text: "decide now"
+        match_type: exact
+        languages: [en]
+      - text: "la oferta cierra hoy"
+        match_type: exact
+        languages: [es]
+      - text: "debe decidir hoy"
+        match_type: exact
+        languages: [es]
+      - text: "solo por hoy"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "The offer closes today so you need to make a decision right now."
+        - "This is a today only rate that I cannot hold for you beyond midnight."
+        - "You must decide today or the allocation will be given to another client."
+        - "The offer closes this Friday and there is no extension possible."
+        - "La oferta cierra hoy y debe decidir antes de las cinco de la tarde."
+      negative:
+        - "Take your time to consider the offer and call us when you are ready."
+        - "The standard subscription period closes at the end of the month."
+        - "Please review the documents and get back to us at your convenience."
+
+  # ── Scarcity / exclusivity pressure ──────────────────────────────────────
+  - rule_id: PT-002
+    description: >
+      Agent uses false scarcity or exclusivity claims to pressure a purchase.
+      Prohibited under FTC Act Section 5 when the scarcity is manufactured.
+    severity: HIGH
+    enabled: true
+    phrases:
+      - text: "limited availability"
+        match_type: exact
+        languages: [en]
+      - text: "limited allocation"
+        match_type: exact
+        languages: [en]
+      - text: "limited places"
+        match_type: exact
+        languages: [en]
+      - text: "only a few spots"
+        match_type: exact
+        languages: [en]
+      - text: "exclusive opportunity"
+        match_type: exact
+        languages: [en]
+      - text: "exclusive offer"
+        match_type: exact
+        languages: [en]
+      - text: "not available to the general public"
+        match_type: exact
+        languages: [en]
+      - text: "selected clients only"
+        match_type: exact
+        languages: [en]
+      - text: "invitation only"
+        match_type: exact
+        languages: [en]
+      - text: "disponibilidad limitada"
+        match_type: exact
+        languages: [es]
+      - text: "oportunidad exclusiva"
+        match_type: exact
+        languages: [es]
+      - text: "solo para clientes seleccionados"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "This is an exclusive opportunity not available to the general public."
+        - "We have limited allocation and I cannot guarantee your spot after today."
+        - "This exclusive offer is available to selected clients only."
+        - "There are only a few spots remaining at this rate."
+        - "Esta es una oportunidad exclusiva solo para clientes seleccionados de la entidad."
+      negative:
+        - "This is a publicly available fund open to all retail investors."
+        - "The allocation is large and there is no immediate pressure to subscribe."
+        - "You are welcome to take whatever time you need to decide."
+
+  # ── Fear of missing out ───────────────────────────────────────────────────
+  - rule_id: PT-003
+    description: >
+      Agent uses FOMO language to pressure a decision — implying the customer
+      will suffer significant loss by not acting immediately.
+    severity: HIGH
+    enabled: true
+    phrases:
+      - text: "miss out"
+        match_type: exact
+        languages: [en]
+      - text: "don't miss out"
+        match_type: exact
+        languages: [en]
+      - text: "missing out"
+        match_type: exact
+        languages: [en]
+      - text: "last chance"
+        match_type: exact
+        languages: [en]
+      - text: "final opportunity"
+        match_type: exact
+        languages: [en]
+      - text: "now or never"
+        match_type: exact
+        languages: [en]
+      - text: "act now"
+        match_type: exact
+        languages: [en]
+      - text: "no pierda esta oportunidad"
+        match_type: exact
+        languages: [es]
+      - text: "última oportunidad"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "If you don't act now you will miss out on these returns entirely."
+        - "This is your last chance to invest at this preferential rate."
+        - "Don't miss out — other clients are already confirming their positions."
+        - "It's now or never if you want to benefit from this product launch."
+        - "No pierda esta oportunidad única de invertir a este tipo de interés."
+      negative:
+        - "Please take your time — this is a significant financial decision."
+        - "You have until the end of the subscription period to decide."
+        - "There is no rush and we encourage you to discuss this with your family."
+
+  # ── Undue pressure / personal targeting ──────────────────────────────────
+  - rule_id: PT-004
+    description: >
+      Agent makes personalised claims implying the product was specially reserved
+      for the customer, or that the customer will be letting someone down by declining.
+    severity: HIGH
+    enabled: true
+    phrases:
+      - text: "just for you"
+        match_type: exact
+        languages: [en]
+      - text: "reserved for you"
+        match_type: exact
+        languages: [en]
+      - text: "specially for you"
+        match_type: exact
+        languages: [en]
+      - text: "thought of you specifically"
+        match_type: exact
+        languages: [en]
+      - text: "let me down"
+        match_type: exact
+        languages: [en]
+      - text: "solo para usted"
+        match_type: exact
+        languages: [es]
+      - text: "reservado para usted"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "I have reserved this rate just for you personally."
+        - "This product was specially for you — we thought of you specifically."
+        - "Don't let me down, I have put my reputation on the line for this allocation."
+        - "This allocation is reserved for you and I'd hate to see you miss it."
+        - "Este tipo de interés está reservado para usted exclusivamente."
+      negative:
+        - "I think this product aligns well with your stated investment objectives."
+        - "Based on your risk profile, I believe this product may be appropriate."
+        - "I wanted to make sure you were aware of this product as it launched today."

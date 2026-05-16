@@ -1,0 +1,323 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint ────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Prettier
+        run: pnpm format:check
+
+  # ── Unit Tests ─────────────────────────────────────────────────────
+  test-ingestion:
+    name: Unit Tests — ingestion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm --filter @eso/ingestion build
+
+      - name: Run unit tests
+        run: pnpm --filter @eso/ingestion test --coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ingestion
+          path: services/ingestion/coverage/
+          retention-days: 7
+
+  # ── Type Check ─────────────────────────────────────────────────────
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type check — ingestion
+        run: pnpm --filter @eso/ingestion exec tsc --noEmit
+
+  # ── Python Unit Tests (Sprint 2 + 3) ──────────────────────────────────────
+  test-python:
+    name: Unit Tests — Python services
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Download spaCy model (sm — fast, sufficient for unit tests)
+        run: python -m spacy download en_core_web_sm
+
+      - name: Run Python unit tests
+        run: pytest tests/unit/ -v --tb=short --cov=services/nlp-engine --cov-report=xml
+
+      - name: Upload NLP engine coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-nlp-engine
+          path: coverage.xml
+          retention-days: 7
+
+  # ── Compliance Regression (Sprint 3) ──────────────────────────────────────
+  # Verifies that known mis-selling scripts always trigger risk events.
+  test-compliance-regression:
+    name: Compliance Regression — NLP Engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Download spaCy model
+        run: python -m spacy download en_core_web_sm
+
+      - name: Run compliance regression suite
+        env:
+          SPACY_MODEL: en_core_web_sm
+        run: >
+          pytest tests/unit/test_phrase_matcher.py
+          tests/unit/test_disclaimer_checker.py
+          tests/unit/test_rule_loader.py
+          -v --tb=short
+
+  # ── Compliance Regression — full scoring pipeline (Sprint 4) ─────────────
+  # Uses real phrase rules + real score aggregator; LLM is mocked.
+  # All 5 mis-selling scripts must score ≥ 86 (Critical) on every run.
+  test-scoring-regression:
+    name: Compliance Regression — Score Aggregator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Download spaCy model
+        run: python -m spacy download en_core_web_sm
+
+      - name: Run scoring regression suite
+        run: pytest tests/regression/ -v --tb=short
+
+  # ── Dashboard Build + Tests (Sprint 5) ────────────────────────────
+  test-dashboard:
+    name: Dashboard — Build + Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type check — dashboard
+        run: pnpm --filter @eso/dashboard exec tsc --noEmit
+
+      - name: Run dashboard unit tests
+        run: pnpm --filter @eso/dashboard test
+
+      - name: Build dashboard
+        run: pnpm --filter @eso/dashboard build
+
+  # ── API Build + Tests (Sprint 5) ──────────────────────────────────
+  test-api:
+    name: API — Build + Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type check — API
+        run: pnpm --filter @eso/api exec tsc --noEmit
+
+      - name: Run API unit tests
+        run: pnpm --filter @eso/api test
+
+  # ── E2E Tests — Playwright (Sprint 6) ────────────────────────────
+  # Runs against a staging environment seeded with a known CRITICAL call.
+  # Skipped if ESO_TEST_SUPERVISOR_TOKEN or ESO_SEED_CALL_ID are not set.
+  test-e2e:
+    name: E2E Tests — Playwright
+    runs-on: ubuntu-latest
+    env:
+      ESO_TEST_SUPERVISOR_TOKEN: ${{ secrets.ESO_TEST_SUPERVISOR_TOKEN }}
+      ESO_TEST_COMPLIANCE_TOKEN: ${{ secrets.ESO_TEST_COMPLIANCE_TOKEN }}
+      ESO_SEED_CALL_ID: ${{ secrets.ESO_SEED_CALL_ID }}
+      E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+      AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── Integration Tests (Sprint 2) ───────────────────────────────────
+  test-integration:
+    name: Integration Tests — STT pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Download spaCy model
+        run: python -m spacy download en_core_web_sm
+
+      - name: Run integration tests (in-memory DB, mocked Kafka)
+        env:
+          SPACY_MODEL: en_core_web_sm
+        run: pytest tests/integration/ -v --tb=short
+
+  # ── CI Gate ────────────────────────────────────────────────────────
+  # All jobs above must pass before a PR can be merged.
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - test-ingestion
+      - typecheck
+      - test-python
+      - test-integration
+      - test-compliance-regression
+      - test-scoring-regression
+      - test-dashboard
+      - test-api
+      - test-e2e
+    if: always()
+    steps:
+      - name: Evaluate gate
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ||
+                "${{ needs.test-ingestion.result }}" != "success" ||
+                "${{ needs.typecheck.result }}" != "success" ||
+                "${{ needs.test-python.result }}" != "success" ||
+                "${{ needs.test-integration.result }}" != "success" ||
+                "${{ needs.test-compliance-regression.result }}" != "success" ||
+                "${{ needs.test-scoring-regression.result }}" != "success" ||
+                "${{ needs.test-dashboard.result }}" != "success" ||
+                "${{ needs.test-api.result }}" != "success" ||
+                "${{ needs.test-e2e.result }}" != "success" ]]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
+          echo "All CI checks passed."

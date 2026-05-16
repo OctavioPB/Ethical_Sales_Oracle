@@ -1,0 +1,63 @@
+# ESO Kafka Topic Configuration
+# Naming convention: eso.{domain}.{region}.{desk_id}
+# All topics must be created via this config — never use auto-create in production.
+
+topics:
+  # ── Audio ingestion ──────────────────────────────────────────────────
+  - name_pattern: "eso.audio.{region}.{desk_id}"
+    description: >
+      Raw 15-second PCM audio chunks from a sales desk. One partition per active
+      call stream is the intended assignment strategy. Retained for 24 hours;
+      audio is never written to long-term storage per the privacy policy.
+    partitions: 6
+    replication_factor: 1          # 3 in production (multi-broker)
+    config:
+      retention.ms: "86400000"     # 24 hours
+      segment.bytes: "134217728"   # 128 MB
+      cleanup.policy: delete
+      compression.type: lz4
+      max.message.bytes: "5242880" # 5 MB (covers 15s PCM 16-bit 16kHz stereo)
+    schema_subject: "eso.audio-value"
+
+  # ── Risk events (NLP phrase hits) ────────────────────────────────────
+  - name: eso.events.risk
+    description: >
+      Structured risk events emitted by the NLP engine for each rule match.
+      Consumed by the risk-scorer service.
+    partitions: 3
+    replication_factor: 1
+    config:
+      retention.ms: "604800000"    # 7 days
+      cleanup.policy: delete
+      compression.type: snappy
+    schema_subject: "eso.risk-event-value"
+
+  # ── Aggregated call risk scores ───────────────────────────────────────
+  - name: eso.scores.calls
+    description: >
+      Final 0–100 risk scores per call, written by the risk-scorer after
+      combining phrase-match events with the LLM holistic score.
+      Consumed by the dashboard WebSocket server.
+    partitions: 3
+    replication_factor: 1
+    config:
+      retention.ms: "604800000"    # 7 days
+      cleanup.policy: delete
+      compression.type: snappy
+    schema_subject: "eso.call-score-value"
+
+  # ── Operational alerts ────────────────────────────────────────────────
+  - name: eso.alerts.ops
+    description: >
+      Pipeline failure events from Airflow DAGs and Kafka consumers.
+      Low volume; consumed by the ops alerting handler (PagerDuty bridge).
+    partitions: 1
+    replication_factor: 1
+    config:
+      retention.ms: "2592000000"   # 30 days
+      cleanup.policy: delete
+
+# Local dev seed topics (created by kafka-init container)
+dev_seed_topics:
+  - eso.audio.eu.desk_001
+  - eso.audio.us.desk_001

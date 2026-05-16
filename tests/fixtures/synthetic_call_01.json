@@ -1,0 +1,132 @@
+{
+  "_description": "Synthetic 3-minute banking call fixture. All names, numbers, and scenarios are entirely fabricated. Used for integration and compliance regression tests.",
+  "call_id": "c3a0f1e2-dead-beef-9999-000000000001",
+  "region": "EU",
+  "desk_id": "desk_001",
+  "agent_id": "agent_test_01",
+  "duration_s": 180,
+  "raw_utterances": [
+    {
+      "speaker": "AGENT",
+      "start_ms": 0,
+      "end_ms": 4200,
+      "text": "Good morning, this is Alex from Premier Investments. Am I speaking with the account holder?"
+    },
+    {
+      "speaker": "CUSTOMER",
+      "start_ms": 4500,
+      "end_ms": 7800,
+      "text": "Yes, hello. My name is John Smith."
+    },
+    {
+      "speaker": "AGENT",
+      "start_ms": 8000,
+      "end_ms": 14500,
+      "text": "Great, Mr Smith. I wanted to tell you about our new structured product. It offers a guaranteed return of twelve percent per year, completely risk free."
+    },
+    {
+      "speaker": "CUSTOMER",
+      "start_ms": 15000,
+      "end_ms": 19000,
+      "text": "That sounds interesting. Can you tell me more?"
+    },
+    {
+      "speaker": "AGENT",
+      "start_ms": 19500,
+      "end_ms": 28000,
+      "text": "Absolutely. You can't lose money with this product. We have never had a single client lose a penny. The offer closes this Friday so you need to decide today."
+    },
+    {
+      "speaker": "CUSTOMER",
+      "start_ms": 28500,
+      "end_ms": 33000,
+      "text": "I would need to move funds from my account number 12345678 to take advantage of this."
+    },
+    {
+      "speaker": "AGENT",
+      "start_ms": 33500,
+      "end_ms": 42000,
+      "text": "That is fine. We can arrange that. You can also reach me directly on 555-867-5309 if you have questions. This product is not available to the general public, so it is an exclusive opportunity just for you."
+    },
+    {
+      "speaker": "CUSTOMER",
+      "start_ms": 42500,
+      "end_ms": 48000,
+      "text": "I need to think about it. What is the minimum investment?"
+    },
+    {
+      "speaker": "AGENT",
+      "start_ms": 48500,
+      "end_ms": 56000,
+      "text": "The minimum is ten thousand euros. But I must warn you, we have very limited allocation. If you do not confirm today you will miss out entirely."
+    },
+    {
+      "speaker": "CUSTOMER",
+      "start_ms": 56500,
+      "end_ms": 60000,
+      "text": "Okay, let me call you back."
+    },
+    {
+      "speaker": "AGENT",
+      "start_ms": 60500,
+      "end_ms": 72000,
+      "text": "Of course. Before I let you go I do need to mention that past performance is not a guarantee of future results and capital may be at risk. You should consult an independent financial adviser. Do you have any other questions?"
+    },
+    {
+      "speaker": "CUSTOMER",
+      "start_ms": 72500,
+      "end_ms": 75000,
+      "text": "No, that is all. Thank you."
+    },
+    {
+      "speaker": "AGENT",
+      "start_ms": 75500,
+      "end_ms": 80000,
+      "text": "Thank you for your time, Mr Smith. Have a great day."
+    }
+  ],
+  "expected_risk_phrases": [
+    {
+      "utterance_index": 2,
+      "phrase": "guaranteed return",
+      "category": "PROHIBITED_PROMISE"
+    },
+    {
+      "utterance_index": 2,
+      "phrase": "completely risk free",
+      "category": "PROHIBITED_PROMISE"
+    },
+    {
+      "utterance_index": 4,
+      "phrase": "can't lose money",
+      "category": "PROHIBITED_PROMISE"
+    },
+    {
+      "utterance_index": 4,
+      "phrase": "offer closes this Friday so you need to decide today",
+      "category": "PRESSURE_TACTIC"
+    },
+    {
+      "utterance_index": 6,
+      "phrase": "exclusive opportunity just for you",
+      "category": "PRESSURE_TACTIC"
+    },
+    {
+      "utterance_index": 8,
+      "phrase": "limited allocation",
+      "category": "PRESSURE_TACTIC"
+    },
+    {
+      "utterance_index": 8,
+      "phrase": "If you do not confirm today you will miss out entirely",
+      "category": "PRESSURE_TACTIC"
+    }
+  ],
+  "expected_pii": [
+    { "field": "name", "value": "John Smith", "utterance_index": 1 },
+    { "field": "account_number", "value": "12345678", "utterance_index": 5 },
+    { "field": "phone", "value": "555-867-5309", "utterance_index": 6 }
+  ],
+  "expected_risk_score_min": 86,
+  "compliance_note": "This fixture contains prohibited promise language and multiple pressure tactics. A correctly configured NLP engine must score this call >= 86 (Critical)."
+}

@@ -1,0 +1,88 @@
+# ESO Risk Rule Schema — v1.0.0
+# ────────────────────────────────────────────────────────────────────────────
+# This file documents the YAML structure every rule file must conform to.
+# It is NOT parsed at runtime — it is the reference for compliance SMEs and
+# engineers authoring or editing rule sets.
+#
+# Two distinct rule set types exist:
+#
+#   1. Detection rules  (prohibited_promises.yaml, pressure_tactics.yaml)
+#      → Match a phrase IN the transcript → emit a RiskEvent
+#
+#   2. Disclaimer rules (missing_disclaimers.yaml)
+#      → Check for the ABSENCE of a phrase across the full call → emit a RiskEvent
+#
+# ────────────────────────────────────────────────────────────────────────────
+
+# ── Detection rule set structure ─────────────────────────────────────────────
+#
+# schema_version: "1.0.0"          # semver — bump on breaking changes
+# category: PROHIBITED_PROMISE     # PROHIBITED_PROMISE | PRESSURE_TACTIC | OFF_SCRIPT_CLAIM
+# sector: banking                  # banking | insurance | pharma | all
+# jurisdiction: EU                 # ES | UK | US | EU | all
+# enabled: true                    # false disables the entire rule set
+#
+# rules:
+#   - rule_id: PP-001              # MUST be globally unique; never reuse a retired ID
+#     description: >
+#       Human-readable description for the Compliance Officer dashboard.
+#     severity: CRITICAL           # HIGH | CRITICAL
+#     enabled: true
+#     phrases:
+#       - text: "guaranteed return"        # phrase to match (case-insensitive by default)
+#         match_type: exact                # exact | regex
+#         languages: [en]                 # ISO 639-1 codes; omit for all languages
+#       - text: "garantía de rentabilidad"
+#         match_type: exact
+#         languages: [es]
+#
+#     test_fixtures:               # REQUIRED: at least 3 positive + 2 negative
+#       positive:                  # utterances that MUST produce a match
+#         - "This offers a guaranteed return of twelve percent per year."
+#         - "We guarantee returns regardless of market conditions."
+#         - "Your guaranteed return is locked in for five years."
+#       negative:                  # utterances that MUST NOT produce a match
+#         - "Past performance does not guarantee future returns."
+#         - "There is no guarantee in equity markets."
+#
+# ── Disclaimer rule set structure ────────────────────────────────────────────
+#
+# schema_version: "1.0.0"
+# category: MISSING_DISCLAIMER
+# sector: banking
+# jurisdiction: EU
+# enabled: true
+#
+# rules:
+#   - rule_id: MD-001
+#     description: >
+#       Past-performance disclaimer required by MiFID II Article 24.
+#     severity: HIGH
+#     enabled: true
+#     required_phrases:            # ANY ONE of these satisfies the requirement
+#       - text: "past performance is not"
+#         match_type: exact
+#         languages: [en]
+#       - text: "past performance does not guarantee"
+#         match_type: exact
+#         languages: [en]
+#       - text: "rentabilidades pasadas no garantizan"
+#         match_type: exact
+#         languages: [es]
+#
+#     test_fixtures:
+#       positive:                  # full transcripts that ARE compliant (disclaimer present)
+#         - "Past performance is not a reliable indicator of future results."
+#         - "I must remind you that past performance does not guarantee future returns."
+#       negative:                  # full transcripts that are NON-compliant (disclaimer absent)
+#         - "This product has always performed well and we expect it to continue."
+#         - "You will receive twelve percent regardless of market conditions."
+#
+# ── Validation rules enforced by rule_loader.py ──────────────────────────────
+#
+# 1. rule_id must match pattern: [A-Z]{2}-\d{3}  (e.g., PP-001, MD-003, PT-007)
+# 2. rule_id must be unique across ALL rule files
+# 3. Each rule must have >= 3 positive and >= 2 negative test_fixtures
+# 4. match_type must be "exact" or "regex"
+# 5. severity must be "HIGH" or "CRITICAL"
+# 6. enabled at rule-set level overrides individual rule enabled flags when false

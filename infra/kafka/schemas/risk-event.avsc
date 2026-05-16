@@ -1,0 +1,34 @@
+{
+  "type": "record",
+  "name": "RiskEvent",
+  "namespace": "com.eso.risk",
+  "doc": "A risk detection event emitted by the NLP engine when a rule is triggered.",
+  "fields": [
+    { "name": "eventId",     "type": "string", "doc": "UUID v4 of this event." },
+    { "name": "callId",      "type": "string", "doc": "UUID of the parent call." },
+    { "name": "ruleId",      "type": "string", "doc": "ID of the matched rule from the YAML rule set." },
+    {
+      "name": "category",
+      "type": {
+        "type": "enum",
+        "name": "RiskCategory",
+        "symbols": [
+          "PROHIBITED_PROMISE",
+          "MISSING_DISCLAIMER",
+          "PRESSURE_TACTIC",
+          "OFF_SCRIPT_CLAIM"
+        ]
+      }
+    },
+    { "name": "utterance",   "type": "string", "doc": "The transcript utterance that triggered the rule." },
+    { "name": "matchedPhrase","type": "string", "doc": "The specific phrase that matched." },
+    { "name": "confidence",  "type": "float",  "doc": "Match confidence 0.0–1.0." },
+    { "name": "speaker",     "type": { "type": "enum", "name": "Speaker", "symbols": ["AGENT", "CUSTOMER"] } },
+    {
+      "name": "triggeredAt",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Epoch ms when the risk phrase was spoken."
+    },
+    { "name": "schemaVersion", "type": "string", "default": "1.0.0" }
+  ]
+}

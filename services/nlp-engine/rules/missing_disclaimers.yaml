@@ -1,0 +1,155 @@
+schema_version: "1.0.0"
+category: MISSING_DISCLAIMER
+sector: banking
+jurisdiction: EU
+enabled: true
+# Regulatory basis: MiFID II Article 24(4); CNMV Circular 1/2022 section 3.2
+# Logic: if NONE of the required_phrases appear anywhere in the call, emit a risk event.
+
+rules:
+
+  # ── Past performance disclaimer ───────────────────────────────────────────
+  - rule_id: MD-001
+    description: >
+      MiFID II Article 24(4)(b) requires that any reference to past performance
+      is accompanied by a warning that past performance is not a reliable indicator
+      of future results. If the agent discusses historical returns without this warning,
+      a MISSING_DISCLAIMER event is raised.
+    severity: HIGH
+    enabled: true
+    required_phrases:
+      - text: "past performance is not"
+        match_type: exact
+        languages: [en]
+      - text: "past performance does not guarantee"
+        match_type: exact
+        languages: [en]
+      - text: "past performance is no guarantee"
+        match_type: exact
+        languages: [en]
+      - text: "historic performance is not"
+        match_type: exact
+        languages: [en]
+      - text: "rentabilidades pasadas no garantizan"
+        match_type: exact
+        languages: [es]
+      - text: "rendimientos pasados no son indicativos"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "I must remind you that past performance is not a guarantee of future results."
+        - "Our fund has returned eight percent annually but past performance does not guarantee future returns."
+        - "Historical performance has been strong, though past performance is not indicative of future results."
+      negative:
+        - "The fund has returned eight percent per year consistently and we expect this to continue."
+        - "Our track record is excellent and investors have always made money."
+
+  # ── Capital at risk disclaimer ─────────────────────────────────────────────
+  - rule_id: MD-002
+    description: >
+      Any investment product call must include a clear statement that the customer's
+      capital is at risk. Required under MiFID II Article 24 and FCA COBS 4.5.
+    severity: HIGH
+    enabled: true
+    required_phrases:
+      - text: "capital may be at risk"
+        match_type: exact
+        languages: [en]
+      - text: "capital is at risk"
+        match_type: exact
+        languages: [en]
+      - text: "you may get back less"
+        match_type: exact
+        languages: [en]
+      - text: "you could lose some or all"
+        match_type: exact
+        languages: [en]
+      - text: "your investment may fall"
+        match_type: exact
+        languages: [en]
+      - text: "el capital puede estar en riesgo"
+        match_type: exact
+        languages: [es]
+      - text: "podría perder parte o la totalidad"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "Please note that capital may be at risk and you may get back less than you invest."
+        - "Investments can go down as well as up and your capital is at risk."
+        - "Important: you could lose some or all of your invested capital."
+      negative:
+        - "This is a very secure product with excellent historical returns."
+        - "Our structured products have never resulted in a capital loss for clients."
+
+  # ── Independent advice disclaimer ─────────────────────────────────────────
+  - rule_id: MD-003
+    description: >
+      When discussing complex investment products with retail clients, agents must
+      recommend seeking independent financial advice. Required for complex instruments
+      under MiFID II Article 24(5).
+    severity: HIGH
+    enabled: true
+    required_phrases:
+      - text: "independent financial advice"
+        match_type: exact
+        languages: [en]
+      - text: "independent financial adviser"
+        match_type: exact
+        languages: [en]
+      - text: "independent advice"
+        match_type: exact
+        languages: [en]
+      - text: "consult a financial adviser"
+        match_type: exact
+        languages: [en]
+      - text: "asesor financiero independiente"
+        match_type: exact
+        languages: [es]
+      - text: "asesoramiento financiero independiente"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "I strongly recommend you consult an independent financial adviser before making any decision."
+        - "As required by regulation, please seek independent financial advice before proceeding."
+        - "You should speak to an independent financial adviser to ensure this product is suitable for you."
+      negative:
+        - "I am confident this product is right for you and you should invest today."
+        - "You do not need to consult anyone else, I have all the information you need."
+
+  # ── Product suitability disclaimer ────────────────────────────────────────
+  - rule_id: MD-004
+    description: >
+      Agent must communicate that the product may not be suitable for all investors
+      and is subject to a suitability assessment. MiFID II Article 25.
+    severity: HIGH
+    enabled: true
+    required_phrases:
+      - text: "not suitable for all investors"
+        match_type: exact
+        languages: [en]
+      - text: "may not be suitable"
+        match_type: exact
+        languages: [en]
+      - text: "suitability assessment"
+        match_type: exact
+        languages: [en]
+      - text: "appropriate for your needs"
+        match_type: exact
+        languages: [en]
+      - text: "no es adecuado para todos"
+        match_type: exact
+        languages: [es]
+      - text: "evaluación de idoneidad"
+        match_type: exact
+        languages: [es]
+    test_fixtures:
+      positive:
+        - "This product is not suitable for all investors and a suitability assessment is required."
+        - "Before proceeding we need to confirm the product may not be suitable for your profile."
+        - "Our compliance requires we conduct a suitability assessment to ensure this is appropriate for your needs."
+      negative:
+        - "This product is perfect for every type of investor looking for returns."
+        - "Anyone can benefit from this investment regardless of their financial situation."

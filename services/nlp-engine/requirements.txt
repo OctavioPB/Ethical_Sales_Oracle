@@ -1,0 +1,8 @@
+spacy==3.7.4
+pyyaml==6.0.2
+psycopg2-binary==2.9.9
+kafka-python==2.0.2
+anthropic==0.40.0
+# Download the model after install:
+#   python -m spacy download en_core_web_lg   (production)
+#   python -m spacy download en_core_web_sm   (CI / tests)

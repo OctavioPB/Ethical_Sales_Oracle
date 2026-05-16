@@ -1,0 +1,16 @@
+# Installed into the Airflow base image (apache/airflow:2.9.1-python3.11)
+# via ADDITIONAL_PYTHON_REQS or a custom Dockerfile.
+
+# Services deps
+kafka-python==2.0.2
+psycopg2-binary==2.9.9
+spacy==3.7.4
+
+# STT (Whisper path — GPU node only)
+openai-whisper==20231117
+numpy>=1.24.0
+
+# Diarization (GPU node only — install separately on worker nodes)
+# pyannote.audio==3.1.1
+# soundfile==0.12.1
+# torch>=2.1.0

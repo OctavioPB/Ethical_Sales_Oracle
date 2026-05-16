@@ -1,0 +1,10 @@
+# Core (Whisper path)
+openai-whisper==20231117
+numpy>=1.24.0
+torch>=2.1.0        # GPU recommended; CPU fallback works for dev
+
+# Optional (Azure path — install only when STT_PROVIDER=azure)
+# azure-cognitiveservices-speech==1.37.0
+
+# Shared
+kafka-python==2.0.2

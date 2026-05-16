@@ -95,3 +95,5 @@ CREATE INDEX IF NOT EXISTS idx_llm_prompt_audits_call_id ON llm_prompt_audits(ca
 CREATE INDEX IF NOT EXISTS idx_calls_region_desk ON calls(region, desk_id);
 CREATE INDEX IF NOT EXISTS idx_interventions_call_id ON interventions(call_id);
 CREATE INDEX IF NOT EXISTS idx_utterances_started_at ON utterances(call_id, started_at);
+-- Composite index for the call-detail hot path: JOIN on call_id + ORDER BY scored_at DESC (perf fix #3)
+CREATE INDEX IF NOT EXISTS idx_call_risk_scores_call_scored ON call_risk_scores(call_id, scored_at DESC);

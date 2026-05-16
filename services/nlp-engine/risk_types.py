@@ -120,7 +120,7 @@ class LLMScoreResult:
     """Result returned by the LLM scoring service. Never persisted directly — only hashes are stored."""
 
     score: int              # 0–100 contextual risk score
-    rationale: str          # LLM-generated explanation (transient; not logged to DB)
+    rationale: str          # LLM-generated explanation; persisted to llm_prompt_audits.rationale_text
     model: str              # e.g. "claude-sonnet-4-20250514"
     prompt_hash: str        # SHA-256 hex of the full prompt string
     response_hash: str      # SHA-256 hex of the raw API response text

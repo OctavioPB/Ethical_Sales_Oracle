@@ -39,8 +39,8 @@ class PromptAuditLogger:
                     """
                     INSERT INTO llm_prompt_audits
                         (call_id, prompt_hash, response_hash, prompt_version,
-                         model, score, latency_ms)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                         model, score, latency_ms, rationale_text)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         call_id,
@@ -50,6 +50,7 @@ class PromptAuditLogger:
                         result.model,
                         result.score,
                         result.latency_ms,
+                        result.rationale,
                     ),
                 )
 

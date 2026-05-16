@@ -1,0 +1,59 @@
+# Gitleaks configuration — Ethical Sales Oracle
+# https://github.com/gitleaks/gitleaks#configuration
+
+title = "ESO Gitleaks Config"
+
+[extend]
+# Extend the default ruleset distributed with Gitleaks
+useDefault = true
+
+# ── Additional ESO-specific rules ─────────────────────────────────────────────
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API key"
+regex = '''sk-ant-[a-zA-Z0-9\-]{32,}'''
+tags = ["anthropic", "llm", "api-key"]
+
+[[rules]]
+id = "auth0-client-secret"
+description = "Auth0 client secret pattern"
+regex = '''AUTH0_CLIENT_SECRET\s*=\s*["']?[A-Za-z0-9_\-]{32,}["']?'''
+tags = ["auth0", "secret"]
+
+[[rules]]
+id = "pagerduty-key"
+description = "PagerDuty integration key"
+regex = '''ESO_PD_[A-Z_]+_KEY\s*=\s*["']?[a-zA-Z0-9+/]{32,}["']?'''
+tags = ["pagerduty", "alerting"]
+
+[[rules]]
+id = "kafka-sasl-password"
+description = "Kafka SASL password"
+regex = '''KAFKA_SASL_PASSWORD\s*=\s*["']?.{8,}["']?'''
+tags = ["kafka", "credentials"]
+
+# ── Allowlist ──────────────────────────────────────────────────────────────────
+# Patterns that are safe to commit (test fixtures, documentation examples)
+
+[allowlist]
+description = "ESO allowlist"
+regexes = [
+  # Test fixture placeholder tokens
+  '''ESO_TEST_SUPERVISOR_TOKEN\s*=\s*["']?<.*?>["']?''',
+  # Documentation examples
+  '''sk-ant-api00-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX''',
+]
+paths = [
+  # Test fixtures and CI example files are allowed to contain placeholder values
+  '''tests/fixtures/.*''',
+  '''docs/.*''',
+  '''\.github/workflows/.*\.yml''',
+]
+commits = []
+stopwords = [
+  "placeholder",
+  "example",
+  "your-key-here",
+  "REPLACE_ME",
+]

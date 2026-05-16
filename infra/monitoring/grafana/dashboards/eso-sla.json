@@ -1,0 +1,268 @@
+{
+  "__inputs": [],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "11.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" }
+  ],
+  "annotations": { "list": [] },
+  "description": "ESO SLA dashboard: uptime, call coverage %, latency SLA compliance, error budget",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "title": "Pipeline Dashboard",
+      "url": "/d/eso-pipeline-v1",
+      "type": "link",
+      "icon": "external link"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "API Uptime (30d)",
+      "description": "Percentage of scrape intervals where the API returned a 2xx on /health. Target: 99.9%.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "100 * avg_over_time(up{job=\"eso-api\"}[30d])",
+          "legendFormat": "Uptime %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 2,
+      "title": "Score Pipeline p95 SLA (8s target)",
+      "description": "% of scoring windows where p95 latency was ≤ 8 seconds. Target: 99%.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [
+        {
+          "expr": "100 * avg_over_time((histogram_quantile(0.95, rate(score_pipeline_duration_seconds_bucket{app=\"eso-api\"}[5m])) <= 8)[30d:5m])",
+          "legendFormat": "SLA compliance %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 95 },
+              { "color": "green", "value": 99 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 3,
+      "title": "Error Budget Remaining (99.9% SLA, 30d)",
+      "description": "Minutes of allowed downtime remaining in the current 30-day window (99.9% = 43.2 min/month).",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "43.2 - (43.2 * (1 - avg_over_time(up{job=\"eso-api\"}[30d])))",
+          "legendFormat": "Budget remaining (min)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 5 },
+              { "color": "green", "value": 15 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 4,
+      "title": "Call Coverage % (scored / ingested)",
+      "description": "Ratio of calls that received a risk score to calls ingested via Kafka. Target: 100%.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "100 * rate(interventions_total{app=\"eso-api\"}[1h]) / clamp_min(rate(kafka_consumergroup_lag{consumergroup=\"eso-nlp-engine\"}[1h]), 1)",
+          "legendFormat": "Coverage %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 95 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 5,
+      "title": "API Uptime — 30-day trend",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "100 * avg_over_time(up{job=\"eso-api\"}[5m])",
+          "legendFormat": "API uptime %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 95,
+          "max": 100,
+          "custom": { "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Score Pipeline p95 Latency vs 8s SLA",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(score_pipeline_duration_seconds_bucket{app=\"eso-api\"}[5m]))",
+          "legendFormat": "p95 latency",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(score_pipeline_duration_seconds_bucket{app=\"eso-api\"}[5m]))",
+          "legendFormat": "p99 latency",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 6 },
+              { "color": "red", "value": 8 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "SLA threshold (8s)" },
+            "properties": [
+              { "id": "custom.lineStyle", "value": { "dash": [10, 5], "fill": "dash" } },
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 7,
+      "title": "API Error Rate (5xx) — SLA impact",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "100 * rate(http_requests_total{app=\"eso-api\",status_code=~\"5..\"}[5m]) / rate(http_requests_total{app=\"eso-api\"}[5m])",
+          "legendFormat": "5xx error rate %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.5 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "False Positive Flags (30d rolling)",
+      "description": "Number of calls flagged as false positives by supervisors. High count → rule review needed.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "increase(interventions_total{app=\"eso-api\",action=\"false_positive\"}[1h])",
+          "legendFormat": "False positive flags/h",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "refresh": "60s",
+  "schemaVersion": 39,
+  "tags": ["eso", "sla", "production"],
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "title": "ESO SLA Dashboard",
+  "uid": "eso-sla-v1",
+  "version": 1
+}

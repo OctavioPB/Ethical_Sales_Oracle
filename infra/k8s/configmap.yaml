@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eso-config
+  namespace: eso-production
+data:
+  KAFKA_BROKERS: "eso-kafka-controller-0.eso-kafka-controller-headless.eso-production.svc.cluster.local:9092,eso-kafka-controller-1.eso-kafka-controller-headless.eso-production.svc.cluster.local:9092,eso-kafka-controller-2.eso-kafka-controller-headless.eso-production.svc.cluster.local:9092"
+  DASHBOARD_ORIGIN: "https://eso.your-domain.com"
+  API_URL: "https://api.eso.your-domain.com"
+  WS_URL: "wss://api.eso.your-domain.com"
+  LLM_MODEL: "claude-sonnet-4-6"
+  RISK_SCORE_THRESHOLD_HIGH: "61"
+  RISK_SCORE_THRESHOLD_CRITICAL: "86"
+  TIMESCALE_ENABLED: "true"
+  NODE_ENV: "production"

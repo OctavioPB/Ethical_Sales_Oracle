@@ -1,0 +1,91 @@
+# Argo Rollouts — Blue/Green deployment for eso-api
+# Requires: kubectl argo rollouts plugin + controller installed in the cluster.
+# Install: https://argoproj.github.io/argo-rollouts/installation/
+#
+# Blue/green flow:
+#   1. New image pushed → controller creates "green" ReplicaSet
+#   2. Green passes readiness checks → traffic cut-over on manual promotion
+#   3. Old "blue" ReplicaSet kept for 5 minutes then scaled to zero
+#   4. If issues detected: kubectl argo rollouts abort eso-api
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: eso-api
+  namespace: eso-production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eso-api
+  template:
+    metadata:
+      labels:
+        app: eso-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "3001"
+    spec:
+      serviceAccountName: eso-api
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: api
+          image: ghcr.io/your-org/eso-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: eso-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eso-db-credentials
+                  key: DATABASE_URL
+            - name: AUTH0_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: eso-auth0-credentials
+                  key: AUTH0_DOMAIN
+            - name: AUTH0_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: eso-auth0-credentials
+                  key: AUTH0_AUDIENCE
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+  strategy:
+    blueGreen:
+      # Active service receives production traffic.
+      # Preview service receives green traffic before promotion.
+      activeService: eso-api
+      previewService: eso-api-preview
+      # Require manual promotion via: kubectl argo rollouts promote eso-api
+      autoPromotionEnabled: false
+      # Keep old (blue) ReplicaSet running for 5 minutes post-promotion for instant rollback.
+      scaleDownDelaySeconds: 300
+      prePromotionAnalysis:
+        templates:
+          - templateName: eso-api-health-check
+        args:
+          - name: service-name
+            value: eso-api-preview

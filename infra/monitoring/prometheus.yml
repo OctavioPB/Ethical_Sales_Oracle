@@ -1,0 +1,46 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: "{{ ENVIRONMENT | default('local') }}"
+    app: eso
+
+rule_files:
+  - alert_rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  # ── ESO API ────────────────────────────────────────────────────
+  - job_name: eso-api
+    static_configs:
+      - targets: ["api:3001"]
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # ── Kafka exporter (consumer lag, topic offsets) ───────────────
+  - job_name: kafka-exporter
+    static_configs:
+      - targets: ["kafka-exporter:9308"]
+    scrape_interval: 30s
+
+  # ── PostgreSQL exporter ────────────────────────────────────────
+  - job_name: postgres-exporter
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+    scrape_interval: 30s
+
+  # ── Airflow StatsD exporter (via statsd_exporter sidecar) ─────
+  - job_name: airflow
+    static_configs:
+      - targets: ["airflow-statsd:9125"]
+    scrape_interval: 30s
+
+  # ── Prometheus itself ──────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

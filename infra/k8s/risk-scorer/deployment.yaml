@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eso-risk-scorer
+  namespace: eso-production
+  labels:
+    app: eso-risk-scorer
+    app.kubernetes.io/part-of: ethical-sales-oracle
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eso-risk-scorer
+  template:
+    metadata:
+      labels:
+        app: eso-risk-scorer
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: risk-scorer
+          image: ghcr.io/your-org/eso-risk-scorer:latest
+          imagePullPolicy: Always
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: eso-config
+                  key: KAFKA_BROKERS
+            - name: KAFKA_CONSUMER_GROUP
+              value: eso-risk-scorer
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eso-db-credentials
+                  key: DATABASE_URL
+            - name: RISK_SCORE_THRESHOLD_HIGH
+              value: "61"
+            - name: RISK_SCORE_THRESHOLD_CRITICAL
+              value: "86"
+            - name: DB_POOL_MAX
+              value: "5"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"

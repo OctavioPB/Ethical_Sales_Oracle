@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eso-ingestion
+  namespace: eso-production
+  labels:
+    app: eso-ingestion
+    app.kubernetes.io/part-of: ethical-sales-oracle
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eso-ingestion
+  template:
+    metadata:
+      labels:
+        app: eso-ingestion
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: ingestion
+          image: ghcr.io/your-org/eso-ingestion:latest
+          imagePullPolicy: Always
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: eso-config
+                  key: KAFKA_BROKERS
+            - name: KAFKA_SASL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: eso-kafka-credentials
+                  key: SASL_USERNAME
+            - name: KAFKA_SASL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eso-kafka-credentials
+                  key: SASL_PASSWORD
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

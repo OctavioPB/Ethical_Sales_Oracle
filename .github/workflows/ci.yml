@@ -197,7 +197,7 @@ jobs:
       - name: Build dashboard
         run: pnpm --filter @eso/dashboard build
 
-  # ── API Build + Tests (Sprint 5) ──────────────────────────────────
+  # ── API Build + Tests (Sprint 5 + Sprint 7) ──────────────────────
   test-api:
     name: API — Build + Unit Tests
     runs-on: ubuntu-latest
@@ -221,6 +221,12 @@ jobs:
 
       - name: Run API unit tests
         run: pnpm --filter @eso/api test
+
+      - name: RBAC audit — role boundaries on every endpoint
+        # Runs rbac.test.ts explicitly so it appears as a distinct step in CI logs.
+        # The file is already included in the broad test run above; this step makes
+        # RBAC regressions immediately visible without scanning the full test output.
+        run: pnpm --filter @eso/api exec vitest run src/routes/rbac.test.ts
 
   # ── E2E Tests — Playwright (Sprint 6) ────────────────────────────
   # Runs against a staging environment seeded with a known CRITICAL call.
@@ -287,6 +293,30 @@ jobs:
           SPACY_MODEL: en_core_web_sm
         run: pytest tests/integration/ -v --tb=short
 
+  # ── Kubernetes manifest validation (Sprint 8) ─────────────────────
+  validate-k8s:
+    name: Validate K8s Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Validate manifests (Kubernetes 1.29, strict mode)
+        # Excludes Argo Rollouts (CRD), ExternalSecret (CRD), ClusterSecretStore (CRD)
+        # which kubeconform doesn't know about without additional schema registries.
+        run: >
+          find infra/k8s -name '*.yaml' \
+            ! -name 'rollout.yaml' \
+            ! -name 'external-secrets.yaml' \
+          | xargs kubeconform
+            -strict
+            -kubernetes-version 1.29.0
+            -summary
+
   # ── CI Gate ────────────────────────────────────────────────────────
   # All jobs above must pass before a PR can be merged.
   ci-gate:
@@ -303,6 +333,7 @@ jobs:
       - test-dashboard
       - test-api
       - test-e2e
+      - validate-k8s
     if: always()
     steps:
       - name: Evaluate gate
@@ -316,7 +347,8 @@ jobs:
                 "${{ needs.test-scoring-regression.result }}" != "success" ||
                 "${{ needs.test-dashboard.result }}" != "success" ||
                 "${{ needs.test-api.result }}" != "success" ||
-                "${{ needs.test-e2e.result }}" != "success" ]]; then
+                "${{ needs.test-e2e.result }}" != "success" ||
+                "${{ needs.validate-k8s.result }}" != "success" ]]; then
             echo "One or more CI jobs failed."
             exit 1
           fi

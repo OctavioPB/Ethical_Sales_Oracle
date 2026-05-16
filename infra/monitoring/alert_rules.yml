@@ -1,0 +1,111 @@
+groups:
+  - name: eso-pipeline-sla
+    interval: 30s
+    rules:
+      # ── Kafka consumer lag > 5 minutes of messages ──────────────────────────
+      # At ~1 call/second, 300 messages ≈ 5 minutes of unprocessed lag.
+      - alert: KafkaConsumerLagCritical
+        expr: >
+          sum by (consumergroup, topic) (
+            kafka_consumergroup_lag{
+              consumergroup=~"eso-.*",
+              topic=~"eso\\..*"
+            }
+          ) > 300
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Kafka consumer lag exceeds 5-minute threshold"
+          description: >
+            Consumer group {{ $labels.consumergroup }} on topic {{ $labels.topic }}
+            has {{ $value }} messages of lag (threshold: 300).
+            Calls may not be scored within the 8s SLA.
+          runbook_url: "https://github.com/eso/runbook#kafka-consumer-lag"
+
+      # ── API error rate > 1% ─────────────────────────────────────────────────
+      - alert: APIErrorRateHigh
+        expr: >
+          rate(http_requests_total{app="eso-api", status_code=~"5.."}[5m])
+          /
+          rate(http_requests_total{app="eso-api"}[5m])
+          > 0.01
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "ESO API error rate exceeds 1%"
+          description: >
+            The ESO API is returning {{ $value | humanizePercentage }} 5xx errors
+            over the last 5 minutes. Threshold: 1%.
+          runbook_url: "https://github.com/eso/runbook#api-error-rate"
+
+      # ── Score pipeline p95 latency > 8 s ───────────────────────────────────
+      - alert: ScorePipelineLatencyHigh
+        expr: >
+          histogram_quantile(0.95,
+            rate(score_pipeline_duration_seconds_bucket{app="eso-api"}[10m])
+          ) > 8
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Score pipeline p95 latency exceeds 8s SLA"
+          description: >
+            p95 end-to-end score latency is {{ $value }}s.
+            The contractual SLA is 8s. Investigate STT, NLP, or DB bottlenecks.
+          runbook_url: "https://github.com/eso/runbook#score-latency"
+
+      # ── No active calls for > 10 min during business hours ─────────────────
+      - alert: NoActiveCallsDuringBusinessHours
+        expr: >
+          active_calls_count{app="eso-api"} == 0
+          AND
+          (hour() >= 6 and hour() <= 22)
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Zero active calls during business hours"
+          description: >
+            The live call store has been empty for 10 minutes during business hours.
+            This may indicate a Kafka ingestion failure or deployment issue.
+          runbook_url: "https://github.com/eso/runbook#no-active-calls"
+
+  - name: eso-infrastructure
+    rules:
+      # ── PostgreSQL connection pool saturation ───────────────────────────────
+      - alert: PostgresConnectionPoolSaturated
+        expr: >
+          pg_stat_database_numbackends{datname="eso"}
+          /
+          pg_settings_max_connections
+          > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "PostgreSQL connection pool > 80% utilised"
+          description: >
+            {{ $value | humanizePercentage }} of max_connections are in use.
+            Review DB_POOL_MAX and connection lifecycle in services.
+
+      # ── Airflow DAG failure ─────────────────────────────────────────────────
+      - alert: AirflowDAGFailed
+        expr: >
+          airflow_dag_run_failed{dag_id=~"eso_.*"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "ESO Airflow DAG failed: {{ $labels.dag_id }}"
+          description: >
+            DAG {{ $labels.dag_id }} has a failed run.
+            Check the Airflow UI for task logs.
+          runbook_url: "https://github.com/eso/runbook#airflow-dag-failure"

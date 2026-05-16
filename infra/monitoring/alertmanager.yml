@@ -1,0 +1,46 @@
+global:
+  resolve_timeout: 5m
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+
+# Route tree — critical alerts wake on-call; warnings go to the same team, lower priority.
+route:
+  receiver: pagerduty-critical
+  group_by: [alertname, team, environment]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - match:
+        severity: critical
+      receiver: pagerduty-critical
+      repeat_interval: 1h
+
+    - match:
+        severity: warning
+      receiver: pagerduty-warning
+      repeat_interval: 4h
+
+receivers:
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - service_key: "${ESO_PD_CRITICAL_KEY}"
+        severity: critical
+        description: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+        details:
+          description: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+          runbook: "{{ range .Alerts }}{{ .Annotations.runbook_url }}\n{{ end }}"
+          environment: "{{ .GroupLabels.environment }}"
+
+  - name: pagerduty-warning
+    pagerduty_configs:
+      - service_key: "${ESO_PD_WARNING_KEY}"
+        severity: warning
+        description: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+
+inhibit_rules:
+  # Suppress warnings when there's already a critical alert for the same component
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: [alertname, team]

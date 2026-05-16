@@ -11,14 +11,16 @@ CREATE DATABASE airflow OWNER airflow;
 
 -- Calls master table
 CREATE TABLE IF NOT EXISTS calls (
-  call_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  region        TEXT NOT NULL,
-  desk_id       TEXT NOT NULL,
-  agent_id      TEXT NOT NULL,
-  started_at    TIMESTAMPTZ NOT NULL,
-  ended_at      TIMESTAMPTZ,
-  duration_s    INTEGER,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  call_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  region           TEXT NOT NULL,
+  desk_id          TEXT NOT NULL,
+  agent_id         TEXT NOT NULL,
+  started_at       TIMESTAMPTZ NOT NULL,
+  ended_at         TIMESTAMPTZ,
+  duration_s       INTEGER,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- Retention tracking (Sprint 7)
+  audio_purged_at  TIMESTAMPTZ   -- set by eso_data_retention_v1 DAG after audio deletion
 );
 
 -- Utterances (diarized transcript lines) — filled in Sprint 2
@@ -86,6 +88,17 @@ CREATE TABLE IF NOT EXISTS interventions (
   triggered_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- False-positive flags — supervisors flag calls that the system mis-scored (Sprint 8)
+-- Feeds into the rule-refinement backlog; append-only (no UPDATE/DELETE).
+CREATE TABLE IF NOT EXISTS false_positive_flags (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  call_id       UUID NOT NULL REFERENCES calls(call_id),
+  supervisor_id TEXT NOT NULL,
+  reason        TEXT,
+  rule_ids      TEXT[],  -- which specific rules were considered incorrect
+  flagged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_utterances_call_id ON utterances(call_id);
 CREATE INDEX IF NOT EXISTS idx_risk_events_call_id ON risk_events(call_id);
@@ -94,6 +107,8 @@ CREATE INDEX IF NOT EXISTS idx_call_risk_scores_call_id ON call_risk_scores(call
 CREATE INDEX IF NOT EXISTS idx_llm_prompt_audits_call_id ON llm_prompt_audits(call_id);
 CREATE INDEX IF NOT EXISTS idx_calls_region_desk ON calls(region, desk_id);
 CREATE INDEX IF NOT EXISTS idx_interventions_call_id ON interventions(call_id);
+CREATE INDEX IF NOT EXISTS idx_false_positive_flags_call_id ON false_positive_flags(call_id);
+CREATE INDEX IF NOT EXISTS idx_false_positive_flags_supervisor ON false_positive_flags(supervisor_id);
 CREATE INDEX IF NOT EXISTS idx_utterances_started_at ON utterances(call_id, started_at);
 -- Composite index for the call-detail hot path: JOIN on call_id + ORDER BY scored_at DESC (perf fix #3)
 CREATE INDEX IF NOT EXISTS idx_call_risk_scores_call_scored ON call_risk_scores(call_id, scored_at DESC);

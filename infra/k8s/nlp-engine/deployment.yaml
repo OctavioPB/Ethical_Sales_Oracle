@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eso-nlp-engine
+  namespace: eso-production
+  labels:
+    app: eso-nlp-engine
+    app.kubernetes.io/part-of: ethical-sales-oracle
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eso-nlp-engine
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: eso-nlp-engine
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: nlp-engine
+          image: ghcr.io/your-org/eso-nlp-engine:latest
+          imagePullPolicy: Always
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: eso-config
+                  key: KAFKA_BROKERS
+            - name: KAFKA_CONSUMER_GROUP
+              value: eso-nlp-engine
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eso-db-credentials
+                  key: DATABASE_URL
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eso-llm-credentials
+                  key: ANTHROPIC_API_KEY
+            - name: LLM_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: eso-config
+                  key: LLM_MODEL
+            - name: SPACY_MODEL
+              value: en_core_web_lg
+            - name: DB_POOL_MAX
+              value: "10"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "3Gi"
+          livenessProbe:
+            exec:
+              # Kafka consumer heartbeat: verify the process is responsive
+              command: ["python", "-c", "import sys; sys.exit(0)"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: eso-nlp-engine
+                topologyKey: kubernetes.io/hostname

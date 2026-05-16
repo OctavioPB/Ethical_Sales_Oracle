@@ -171,4 +171,46 @@ router.post(
   },
 );
 
+// POST /api/calls/:id/false-positive — supervisor flags a call as mis-scored
+// Feeds the rule-refinement backlog; stored in false_positive_flags (append-only).
+const flagBodySchema = z.object({
+  reason: z.string().max(1000).optional(),
+  ruleIds: z.array(z.string().max(64)).max(20).optional(),
+});
+
+router.post(
+  "/:id/false-positive",
+  requireAuth(["supervisor"]),
+  async (req, res): Promise<void> => {
+    const callId = req.params.id;
+    const auth = (req as typeof req & { auth: TokenPayload }).auth;
+
+    const parsed = flagBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
+      return;
+    }
+
+    const { reason, ruleIds } = parsed.data;
+    try {
+      const result = await getPool().query<{ id: string; flagged_at: string }>(
+        `INSERT INTO false_positive_flags (call_id, supervisor_id, reason, rule_ids)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, flagged_at`,
+        [callId, auth.sub, reason ?? null, ruleIds ?? null],
+      );
+      const flag = result.rows[0];
+      process.stdout.write(
+        JSON.stringify({ level: "info", event: "false_positive_flagged", callId, supervisorId: auth.sub, flagId: flag?.id }) + "\n",
+      );
+      res.status(201).json({ id: flag?.id, callId, flaggedAt: flag?.flagged_at });
+    } catch (err) {
+      process.stderr.write(
+        JSON.stringify({ level: "error", event: "false_positive_insert_error", callId, error: String(err) }) + "\n",
+      );
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
 export { router as callsRouter };

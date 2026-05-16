@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { callsRouter, setSocketServer } from "./routes/calls.js";
+import { feedbackRouter } from "./routes/feedback.js";
 import { createTestInjectRouter } from "./routes/testInject.js";
 import { startKafkaConsumer, stopKafkaConsumer } from "./kafka/consumer.js";
 import { verifyToken } from "./middleware/auth.js";
@@ -26,6 +27,7 @@ app.get("/health", (_req, res) => {
 app.get("/metrics", metricsHandler);
 
 app.use("/api/calls", callsRouter);
+app.use("/api/feedback", feedbackRouter);
 
 // 404 handler — structured JSON, no HTML
 app.use((_req, res) => {

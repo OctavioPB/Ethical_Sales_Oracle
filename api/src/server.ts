@@ -2,9 +2,11 @@ import express from "express";
 import { createServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { callsRouter, setSocketServer } from "./routes/calls.js";
+import { createTestInjectRouter } from "./routes/testInject.js";
 import { startKafkaConsumer, stopKafkaConsumer } from "./kafka/consumer.js";
 import { verifyToken } from "./middleware/auth.js";
 import { closePool } from "./db/client.js";
+import { metricsMiddleware, metricsHandler } from "./middleware/metrics.js";
 
 const PORT = parseInt(process.env.PORT ?? "3001", 10);
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
@@ -13,11 +15,15 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
 
 const app = express();
 app.use(express.json());
+app.use(metricsMiddleware);
 
 // Health check — no auth required (used by k8s liveness probe)
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", ts: new Date().toISOString() });
 });
+
+// Prometheus metrics — no auth, scraped by Prometheus only (network-level protection in prod)
+app.get("/metrics", metricsHandler);
 
 app.use("/api/calls", callsRouter);
 
@@ -86,6 +92,15 @@ io.on("connection", (socket) => {
 async function start(): Promise<void> {
   // Inject the Socket.io server into the calls router for intervention broadcasts
   setSocketServer(io);
+
+  // Staging/test only: score injection endpoint for k6 load tests
+  const nodeEnv = process.env.NODE_ENV ?? "production";
+  if (nodeEnv === "staging" || nodeEnv === "test") {
+    app.use("/api/test", createTestInjectRouter(io));
+    process.stdout.write(
+      JSON.stringify({ level: "warn", event: "test_routes_enabled", nodeEnv }) + "\n",
+    );
+  }
 
   // Kafka consumer feeds in-memory store and broadcasts to Socket.io
   await startKafkaConsumer(io);

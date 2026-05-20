@@ -480,7 +480,7 @@ function PipelineDiagram() {
     <svg
       viewBox="0 0 860 320"
       style={{ width: '100%', height: 'auto', display: 'block' }}
-      aria-label="ESO data pipeline diagram"
+      aria-label="OPB data pipeline diagram"
       role="img"
     >
       {/* Background */}
@@ -1000,7 +1000,7 @@ export function InfoPage() {
           color: 'rgba(255,255,255,0.4)',
         }}
       >
-        <span>ESO · Ethical Sales Oracle · System Overview</span>
+        <span>OPB · Ethical Sales Oracle · System Overview</span>
         <span>
           {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }).toUpperCase()}
         </span>

@@ -15,6 +15,7 @@ import { useRiskStream } from '@/hooks/useRiskStream';
 import { CallDetailPage } from '@/pages/CallDetail';
 import { Dashboard } from '@/pages/Dashboard';
 import { InfoPage } from '@/pages/InfoPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import type { AuthUser, Page } from '@/types';
 import '@/styles/tokens.css';
 
@@ -327,23 +328,7 @@ function AuthenticatedApp() {
         </main>
       )}
 
-      {page === 'settings' && (
-        <main id="main-content" style={{ padding: '64px 48px', maxWidth: 1300, margin: '0 auto' }}>
-          <h1
-            style={{
-              fontFamily: "'Fraunces', Georgia, serif",
-              fontSize: 32,
-              fontWeight: 300,
-              color: 'var(--dark)',
-            }}
-          >
-            Dashboard <em style={{ fontStyle: 'italic' }}>settings</em>
-          </h1>
-          <p style={{ fontFamily: 'var(--fb)', color: 'var(--mid)', marginTop: 12 }}>
-            Settings module — Sprint 7.
-          </p>
-        </main>
-      )}
+      {page === 'settings' && <SettingsPage />}
 
       {page === 'info' && <InfoPage />}
     </>

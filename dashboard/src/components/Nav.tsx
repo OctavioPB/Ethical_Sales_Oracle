@@ -77,7 +77,7 @@ export function Nav({ currentPage, onNavigate, isConnected, isPolling }: NavProp
       }}
     >
       {/* OPB Monogram */}
-      <a href="/" aria-label="ESO home" style={{ textDecoration: 'none', flexShrink: 0 }}>
+      <a href="/" aria-label="OPB home" style={{ textDecoration: 'none', flexShrink: 0 }}>
         <span>
           <span
             style={{
@@ -87,7 +87,7 @@ export function Nav({ currentPage, onNavigate, isConnected, isPolling }: NavProp
               color: '#ffffff',
             }}
           >
-            E
+            O
           </span>
           <em
             style={{
@@ -98,7 +98,7 @@ export function Nav({ currentPage, onNavigate, isConnected, isPolling }: NavProp
               color: 'var(--gold-light)',
             }}
           >
-            SO
+            PB
           </em>
         </span>
       </a>

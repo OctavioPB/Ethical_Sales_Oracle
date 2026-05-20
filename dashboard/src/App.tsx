@@ -14,6 +14,7 @@ import { Nav } from '@/components/Nav';
 import { useRiskStream } from '@/hooks/useRiskStream';
 import { CallDetailPage } from '@/pages/CallDetail';
 import { Dashboard } from '@/pages/Dashboard';
+import { InfoPage } from '@/pages/InfoPage';
 import type { AuthUser, Page } from '@/types';
 import '@/styles/tokens.css';
 
@@ -343,6 +344,8 @@ function AuthenticatedApp() {
           </p>
         </main>
       )}
+
+      {page === 'info' && <InfoPage />}
     </>
   );
 }

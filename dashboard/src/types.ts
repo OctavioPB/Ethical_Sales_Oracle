@@ -1,4 +1,4 @@
-export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface CallScore {
   callId: string;
@@ -7,7 +7,7 @@ export interface CallScore {
   deterministicScore: number;
   llmScore: number;
   eventCount: number;
-  scoredAt: string;    // ISO 8601
+  scoredAt: string; // ISO 8601
   schemaVersion: string;
   // Enriched by the API from the calls table
   agentId?: string;
@@ -36,13 +36,13 @@ export interface RiskStreamState {
 }
 
 export interface AuthUser {
-  sub: string;         // Auth0 subject
+  sub: string; // Auth0 subject
   email: string;
-  role: "agent" | "supervisor" | "compliance";
+  role: 'agent' | 'supervisor' | 'compliance';
   name?: string;
 }
 
-export type Page = "dashboard" | "call" | "reports" | "settings";
+export type Page = 'dashboard' | 'call' | 'reports' | 'settings' | 'info';
 
 // ── Call detail ─────────────────────────────────────────────────────────────
 
@@ -53,15 +53,15 @@ export interface RiskEvent {
   matchedPhrase: string;
   speaker: string;
   confidence: number;
-  triggeredAt: string;  // ISO 8601
+  triggeredAt: string; // ISO 8601
 }
 
 export interface AnnotatedUtterance {
   id: number;
-  speaker: "AGENT" | "CUSTOMER";
+  speaker: 'AGENT' | 'CUSTOMER';
   utterance: string;
-  startedAt: string;   // ISO 8601
-  endedAt: string;     // ISO 8601
+  startedAt: string; // ISO 8601
+  endedAt: string; // ISO 8601
   riskEvents: RiskEvent[];
 }
 
@@ -69,7 +69,7 @@ export interface InterventionEvent {
   id: string;
   callId: string;
   supervisorId: string;
-  action: "ALERT_AGENT" | "PAUSE_CALL" | "NOTE";
+  action: 'ALERT_AGENT' | 'PAUSE_CALL' | 'NOTE';
   note?: string;
   triggeredAt: string; // ISO 8601
 }

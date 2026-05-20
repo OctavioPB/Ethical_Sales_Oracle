@@ -1,0 +1,17 @@
+FROM node:22-alpine
+RUN corepack enable
+
+WORKDIR /app
+
+# Install deps using workspace-aware lockfile
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY dashboard/package.json ./dashboard/
+RUN pnpm install --filter @eso/dashboard --frozen-lockfile
+
+# Copy source and config (src overridden by bind mount in compose)
+COPY dashboard/index.html dashboard/vite.config.ts ./dashboard/
+COPY dashboard/tsconfig.json dashboard/tsconfig.node.json ./dashboard/
+COPY dashboard/src ./dashboard/src
+
+EXPOSE 5173
+CMD ["pnpm", "--filter", "@eso/dashboard", "dev"]

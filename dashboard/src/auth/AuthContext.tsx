@@ -8,15 +8,17 @@
  * `https://eso.internal/role`. Configure this in your Auth0 Actions.
  */
 
-import React, { createContext, useCallback, useContext, useState } from "react";
-import type { AuthUser } from "@/types";
+import React, { createContext, useCallback, useContext, useState } from 'react';
+
+import type { AuthUser } from '@/types';
 
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   isAuthenticated: boolean;
-  hasRole: (role: AuthUser["role"]) => boolean;
+  hasRole: (role: AuthUser['role']) => boolean;
   login: () => void;
+  loginAsDemo: () => void;
   logout: () => void;
   /** Called by the Auth0 callback handler with the decoded user + raw token. */
   _setSession: (user: AuthUser, token: string) => void;
@@ -24,7 +26,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const ESO_ROLE_CLAIM = "https://eso.internal/role";
+const ESO_ROLE_CLAIM = 'https://eso.internal/role';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -34,6 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
     setToken(t);
   }, []);
+
+  const loginAsDemo = useCallback(() => {
+    _setSession(
+      {
+        sub: 'demo|supervisor',
+        email: 'demo-supervisor@eso.internal',
+        role: 'supervisor',
+        name: 'Demo Supervisor',
+      },
+      'eso-demo-supervisor-2026',
+    );
+  }, [_setSession]);
 
   const login = useCallback(() => {
     const domain = import.meta.env.VITE_AUTH0_DOMAIN as string;
@@ -51,18 +65,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     const domain = import.meta.env.VITE_AUTH0_DOMAIN as string;
     const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID as string;
-    window.location.href =
-      `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(window.location.origin)}`;
+    window.location.href = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(window.location.origin)}`;
   }, []);
 
-  const hasRole = useCallback(
-    (role: AuthUser["role"]) => user?.role === role,
-    [user],
-  );
+  const hasRole = useCallback((role: AuthUser['role']) => user?.role === role, [user]);
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!user, hasRole, login, logout, _setSession }}
+      value={{
+        user,
+        token,
+        isAuthenticated: !!user,
+        hasRole,
+        login,
+        loginAsDemo,
+        logout,
+        _setSession,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -71,13 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
+  if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
   return ctx;
 }
 
 /** Parses the role claim out of a decoded Auth0 JWT payload. */
-export function extractRole(payload: Record<string, unknown>): AuthUser["role"] {
+export function extractRole(payload: Record<string, unknown>): AuthUser['role'] {
   const raw = payload[ESO_ROLE_CLAIM];
-  if (raw === "supervisor" || raw === "compliance" || raw === "agent") return raw;
-  return "agent";
+  if (raw === 'supervisor' || raw === 'compliance' || raw === 'agent') return raw;
+  return 'agent';
 }

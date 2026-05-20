@@ -1,20 +1,27 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+
+// API_TARGET lets docker-compose point the proxy at the api service name.
+// Falls back to localhost for local dev without Docker.
+const API_TARGET = process.env.API_TARGET ?? 'http://localhost:3001';
+const USE_POLLING = process.env.CHOKIDAR_USEPOLLING === 'true';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { "@": "/src" },
+    alias: { '@': '/src' },
   },
   server: {
-    port: 3000,
+    port: 5173,
+    host: true, // bind 0.0.0.0 so the container port is reachable from host
+    watch: USE_POLLING ? { usePolling: true, interval: 1000 } : undefined,
     proxy: {
-      "/api": {
-        target: "http://localhost:3001",
+      '/api': {
+        target: API_TARGET,
         changeOrigin: true,
       },
-      "/socket.io": {
-        target: "http://localhost:3001",
+      '/socket.io': {
+        target: API_TARGET,
         ws: true,
         changeOrigin: true,
       },
@@ -22,7 +29,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: "jsdom",
-    setupFiles: ["./src/test-setup.ts"],
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
   },
 });

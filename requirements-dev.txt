@@ -1,10 +1,13 @@
-# Root-level dev dependencies for running tests locally
-pytest==8.1.1
-pytest-mock==3.14.0
-pytest-cov==5.0.0
-spacy==3.7.4
-pyyaml==6.0.2
-anthropic==0.40.0
-# python -m spacy download en_core_web_sm   ← for tests
-kafka-python==2.0.2
-psycopg2-binary==2.9.9
+# ESO dev dependencies — install inside a virtualenv, not globally.
+# Setup: python -m venv .venv && .venv\Scripts\activate && pip install -r requirements-dev.txt
+# After install: python -m spacy download en_core_web_sm
+
+pytest>=8.2,<10
+pytest-mock>=3.14
+pytest-cov>=5.0
+spacy>=3.7,<4
+pyyaml>=6.0
+anthropic>=0.40
+kafka-python>=2.0
+psycopg2-binary>=2.9
+# safety is CI-only — pinned in .github/workflows/security.yml, not needed locally

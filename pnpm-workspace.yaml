@@ -1,4 +1,6 @@
 packages:
-  - "services/*"
-  - "dashboard"
-  - "api"
+  - 'services/*'
+  - 'dashboard'
+  - 'api'
+allowBuilds:
+  esbuild: true

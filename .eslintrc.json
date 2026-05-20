@@ -4,7 +4,12 @@
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module",
-    "project": ["./tsconfig.base.json", "./services/*/tsconfig.json", "./api/tsconfig.json"]
+    "project": [
+      "./services/*/tsconfig.json",
+      "./api/tsconfig.json",
+      "./dashboard/tsconfig.json",
+      "./dashboard/tsconfig.node.json"
+    ]
   },
   "plugins": ["@typescript-eslint", "import"],
   "extends": [
@@ -20,6 +25,8 @@
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/explicit-function-return-type": "error",
     "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+    "import/no-unresolved": "off",
     "import/order": [
       "error",
       {
@@ -32,7 +39,20 @@
   },
   "overrides": [
     {
-      "files": ["*.test.ts"],
+      "files": ["dashboard/src/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["*.config.ts", "*.config.js"],
+      "rules": {
+        "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["*.test.ts", "*.test.tsx"],
       "rules": {
         "no-console": "off"
       }

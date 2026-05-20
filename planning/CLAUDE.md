@@ -1,4 +1,5 @@
 # CLAUDE.md — Ethical Sales Oracle
+
 > Guardian de Integridad en Tiempo Real
 
 This file is the primary reference for Claude Code when working on this project. Read it fully before making any changes.
@@ -55,19 +56,19 @@ ethical-sales-oracle/
 
 ## Tech Stack
 
-| Layer | Technology | Notes |
-|---|---|---|
-| Audio Streaming | Apache Kafka | One topic per sales desk / region |
-| Pipeline Orchestration | Apache Airflow | DAGs for STT, cleaning, diarization |
-| Speech-to-Text | OpenAI Whisper (self-hosted) or Azure STT | Configurable via env |
-| Diarization | pyannote.audio | Separates agent vs. customer voice |
-| NLP / Risk Analysis | Claude API (claude-sonnet) + spaCy NER | Phrase matching + LLM scoring |
-| Risk Score Storage | PostgreSQL + TimescaleDB | Time-series risk events |
-| Real-time Push | WebSockets (Socket.io) | Live dashboard updates |
-| Dashboard Frontend | React + TypeScript + Recharts | See BRAND.md for UI decisions |
-| Auth | Auth0 / OAuth2 (role-based: agent · supervisor · compliance) | |
-| Infra | Docker Compose (dev) / Kubernetes (prod) | |
-| CI/CD | GitHub Actions | Lint → Test → Build → Deploy |
+| Layer                  | Technology                                                   | Notes                               |
+| ---------------------- | ------------------------------------------------------------ | ----------------------------------- |
+| Audio Streaming        | Apache Kafka                                                 | One topic per sales desk / region   |
+| Pipeline Orchestration | Apache Airflow                                               | DAGs for STT, cleaning, diarization |
+| Speech-to-Text         | OpenAI Whisper (self-hosted) or Azure STT                    | Configurable via env                |
+| Diarization            | pyannote.audio                                               | Separates agent vs. customer voice  |
+| NLP / Risk Analysis    | Claude API (claude-sonnet) + spaCy NER                       | Phrase matching + LLM scoring       |
+| Risk Score Storage     | PostgreSQL + TimescaleDB                                     | Time-series risk events             |
+| Real-time Push         | WebSockets (Socket.io)                                       | Live dashboard updates              |
+| Dashboard Frontend     | React + TypeScript + Recharts                                | See BRAND.md for UI decisions       |
+| Auth                   | Auth0 / OAuth2 (role-based: agent · supervisor · compliance) |                                     |
+| Infra                  | Docker Compose (dev) / Kubernetes (prod)                     |                                     |
+| CI/CD                  | GitHub Actions                                               | Lint → Test → Build → Deploy        |
 
 ---
 
@@ -78,6 +79,7 @@ ethical-sales-oracle/
 > Do not hardcode colors, fonts, or spacing values in components. Use only the design tokens defined in `BRAND.md`.
 
 Key UI principles (summary — full spec in `BRAND.md`):
+
 - Risk heatmap uses a consistent **traffic-light color scale** (defined in `BRAND.md`)
 - Alert severity badges follow the **severity token system** in `BRAND.md`
 - All compliance-facing copy uses the **formal regulatory tone** defined in `BRAND.md`
@@ -87,20 +89,23 @@ Key UI principles (summary — full spec in `BRAND.md`):
 ## Core Domain Concepts
 
 ### Risk Score (0–100)
-| Range | Level | Action |
-|---|---|---|
-| 0–30 | 🟢 Low | No action required |
-| 31–60 | 🟡 Medium | Flag for post-call review |
-| 61–85 | 🟠 High | Supervisor notified in real-time |
+
+| Range  | Level       | Action                                |
+| ------ | ----------- | ------------------------------------- |
+| 0–30   | 🟢 Low      | No action required                    |
+| 31–60  | 🟡 Medium   | Flag for post-call review             |
+| 61–85  | 🟠 High     | Supervisor notified in real-time      |
 | 86–100 | 🔴 Critical | Supervisor can intervene / pause call |
 
 ### Risk Phrase Categories
+
 - **Prohibited Promises** — e.g., "guaranteed return", "zero risk", "can't lose money"
 - **Missing Disclaimers** — required regulatory warnings not spoken within the call window
 - **Pressure Tactics** — urgency language that may constitute coercive selling
 - **Off-Script Product Claims** — claims not present in the approved product description
 
 ### Actors
+
 - **Agent** — sales representative on the call
 - **Customer** — prospect / existing client
 - **Supervisor** — real-time monitor; receives live alerts
@@ -111,29 +116,34 @@ Key UI principles (summary — full spec in `BRAND.md`):
 ## Claude Code Guidelines
 
 ### General Rules
+
 - Always run `pnpm lint` and `pnpm test` before committing.
 - Never commit secrets, PII, or real call audio to the repo.
 - All log output must be structured JSON — no raw `console.log` in production code.
 - Prefer explicit error types over generic `Error`. Define them in `services/*/errors.ts`.
 
 ### When Working on the NLP Engine
+
 - Risk phrase lists live in `services/nlp-engine/rules/`. They are YAML files — do not hardcode phrases in source.
 - Every prompt sent to the Claude API must be logged (prompt hash + response hash) for auditability. Do not skip this.
 - LLM calls must be wrapped in a retry/timeout handler. Max 3 retries, 10s timeout.
 - Never log the full call transcript to stdout in production — only log the call ID + risk score.
 
 ### When Working on the Dashboard
+
 - Read `BRAND.md` before touching any component.
 - All risk data must flow through `useRiskStream` hook — do not fetch directly in components.
 - The heatmap component must be accessible: keyboard navigable, ARIA labels on all risk cells.
 - Live WebSocket updates must degrade gracefully (polling fallback at 30s intervals).
 
 ### When Working on Kafka / Airflow
+
 - DAG IDs must follow the pattern: `eso_{pipeline_name}_{version}` (e.g., `eso_stt_v1`).
 - Kafka topic naming: `eso.audio.{region}.{desk_id}` — never use generic topic names.
 - All DAG failures must emit an alert to the `eso.alerts.ops` Kafka topic.
 
 ### When Working on the API
+
 - All endpoints require auth middleware — no unprotected routes.
 - Endpoints that return transcript content require the `compliance` role.
 - Paginate any list endpoint (default `limit=50`, max `limit=200`).
@@ -177,13 +187,13 @@ AUTH0_AUDIENCE=...
 
 ## Testing Strategy
 
-| Test Type | Scope | Tool |
-|---|---|---|
-| Unit | Risk scorer logic, phrase matcher, score aggregator | Jest / Pytest |
-| Integration | Kafka → STT → NLP pipeline (using fixture transcripts) | Testcontainers |
-| E2E | Supervisor receives live alert within 5s of risk phrase | Playwright |
-| Load | 500 concurrent call streams | k6 |
-| Compliance Regression | Known mis-selling script always scores ≥ 86 | Jest fixtures |
+| Test Type             | Scope                                                   | Tool           |
+| --------------------- | ------------------------------------------------------- | -------------- |
+| Unit                  | Risk scorer logic, phrase matcher, score aggregator     | Jest / Pytest  |
+| Integration           | Kafka → STT → NLP pipeline (using fixture transcripts)  | Testcontainers |
+| E2E                   | Supervisor receives live alert within 5s of risk phrase | Playwright     |
+| Load                  | 500 concurrent call streams                             | k6             |
+| Compliance Regression | Known mis-selling script always scores ≥ 86             | Jest fixtures  |
 
 Fixture transcripts in `tests/fixtures/` are fully synthetic — never use real customer data.
 

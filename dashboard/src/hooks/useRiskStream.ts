@@ -11,9 +11,10 @@
  *   { calls, latestAlert, isConnected, isPolling, lastUpdated }
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import type { CallScore, RiskAlert, RiskStreamState } from "@/types";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
+
+import type { CallScore, RiskAlert, RiskStreamState } from '@/types';
 
 const WS_URL = import.meta.env.VITE_WS_URL as string | undefined;
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
@@ -28,7 +29,7 @@ function upsertCall(calls: CallScore[], incoming: CallScore): CallScore[] {
 }
 
 async function fetchActiveCalls(token: string): Promise<CallScore[]> {
-  const base = API_URL ?? "";
+  const base = API_URL ?? '';
   const res = await fetch(`${base}/api/calls`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -74,36 +75,46 @@ export function useRiskStream(token: string | null): RiskStreamState {
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(WS_URL ?? "", {
-      path: "/socket.io",
+    const socket = io(WS_URL ?? '', {
+      path: '/socket.io',
       auth: { token },
-      transports: ["websocket", "polling"],
+      transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 2_000,
     });
     socketRef.current = socket;
 
-    socket.on("connect", () => {
+    socket.on('connect', () => {
       setIsConnected(true);
       stopPolling();
+      // Fetch the current snapshot so pre-seeded / in-flight calls are visible
+      // immediately without waiting for the next callScore event.
+      fetchActiveCalls(token)
+        .then((data) => {
+          setCalls(data);
+          setLastUpdated(new Date());
+        })
+        .catch(() => {
+          /* non-fatal; socket events will keep state fresh */
+        });
     });
 
-    socket.on("disconnect", () => {
+    socket.on('disconnect', () => {
       setIsConnected(false);
       startPolling(token);
     });
 
-    socket.on("connect_error", () => {
+    socket.on('connect_error', () => {
       setIsConnected(false);
       startPolling(token);
     });
 
-    socket.on("callScore", (score: CallScore) => {
+    socket.on('callScore', (score: CallScore) => {
       setCalls((prev) => upsertCall(prev, score));
       setLastUpdated(new Date());
     });
 
-    socket.on("riskAlert", (alert: RiskAlert) => {
+    socket.on('riskAlert', (alert: RiskAlert) => {
       setLatestAlert(alert);
       setLastUpdated(new Date());
     });

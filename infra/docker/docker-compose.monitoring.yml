@@ -1,4 +1,4 @@
-version: "3.9"
+﻿version: '3.9'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ESO Monitoring Stack — Prometheus · Alertmanager · Grafana · Exporters
@@ -17,69 +17,69 @@ version: "3.9"
 services:
   prometheus:
     image: prom/prometheus:v2.53.0
-    container_name: eso-prometheus
+    container_name: ethical_sales_oracle-prometheus
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ../monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - prometheus-data:/prometheus
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=30d"
-      - "--web.enable-lifecycle"
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
     networks:
-      - eso-net
+      - ethical_sales_oracle-net
     restart: unless-stopped
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: eso-alertmanager
+    container_name: ethical_sales_oracle-alertmanager
     ports:
-      - "9093:9093"
+      - '9093:9093'
     volumes:
       - ../monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     environment:
-      ESO_PD_CRITICAL_KEY: "${ESO_PD_CRITICAL_KEY:-}"
-      ESO_PD_WARNING_KEY:  "${ESO_PD_WARNING_KEY:-}"
+      ESO_PD_CRITICAL_KEY: '${ESO_PD_CRITICAL_KEY:-}'
+      ESO_PD_WARNING_KEY: '${ESO_PD_WARNING_KEY:-}'
     command:
-      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
     networks:
-      - eso-net
+      - ethical_sales_oracle-net
     restart: unless-stopped
 
   grafana:
     image: grafana/grafana:11.0.0
-    container_name: eso-grafana
+    container_name: ethical_sales_oracle-grafana
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - grafana-data:/var/lib/grafana
       - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-eso_grafana_dev}"
-      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_ADMIN_PASSWORD: '${GRAFANA_PASSWORD:-eso_grafana_dev}'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/eso-pipeline.json
-      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
     networks:
-      - eso-net
+      - ethical_sales_oracle-net
     depends_on:
       - prometheus
     restart: unless-stopped
 
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.7.0
-    container_name: eso-kafka-exporter
+    container_name: ethical_sales_oracle-kafka-exporter
     ports:
-      - "9308:9308"
+      - '9308:9308'
     command:
-      - "--kafka.server=kafka:29092"
-      - "--group.filter=eso-.*"
+      - '--kafka.server=kafka:29092'
+      - '--group.filter=eso-.*'
       - "--topic.filter=eso\\..*"
     networks:
-      - eso-net
+      - ethical_sales_oracle-net
     depends_on:
       kafka:
         condition: service_healthy
@@ -87,13 +87,13 @@ services:
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
-    container_name: eso-postgres-exporter
+    container_name: ethical_sales_oracle-postgres-exporter
     ports:
-      - "9187:9187"
+      - '9187:9187'
     environment:
-      DATA_SOURCE_NAME: "postgresql://eso:eso_dev_secret@postgres:5432/eso?sslmode=disable"
+      DATA_SOURCE_NAME: 'postgresql://eso:eso_dev_secret@postgres:5432/eso?sslmode=disable'
     networks:
-      - eso-net
+      - ethical_sales_oracle-net
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,6 +104,6 @@ volumes:
   grafana-data:
 
 networks:
-  eso-net:
+  ethical_sales_oracle-net:
     external: true
-    name: docker_eso-net
+    name: docker_ethical_sales_oracle-net

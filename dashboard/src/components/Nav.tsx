@@ -24,6 +24,7 @@ export function Nav({ currentPage, onNavigate, isConnected, isPolling }: NavProp
   const navLink: React.CSSProperties = {
     background: 'none',
     border: 'none',
+    outline: 'none',
     color: 'rgba(255,255,255,0.45)',
     cursor: 'pointer',
     fontFamily: 'var(--fb)',
@@ -37,7 +38,6 @@ export function Nav({ currentPage, onNavigate, isConnected, isPolling }: NavProp
 
   const navLinkActive: React.CSSProperties = {
     color: 'var(--gold-light)',
-    backgroundColor: 'rgba(201,168,76,0.12)',
   };
 
   const logoutBtn: React.CSSProperties = {
